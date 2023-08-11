@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"
+        integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <br>
+        <h3 class="mb-3">pichangas</h3>
+        <div class="float-end">
+            <a class="btn btn-success" href="{% url 'pichangasApp:nuevaPichanga' %}">Crear Pichanga</a>
+        </div>
+        <table class="table">
+            <thead>
+                <th>Id</th>
+                <th>Fecha</th>
+                <th>Equipo local</th>
+                <th>Equipo visita</th>
+                <th>Resultado</th>
+                <th>Estado</th>
+                <th>ver</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+            </thead>
+            <tbody>
+                {% for pichanga in objPichanga %}
+                <tr>
+                    <td>{{pichanga.id}}</td>
+                    <td>{{pichanga.fecha}}</td>
+                    <td>{{pichanga.equipo_local}}</td>
+                    <td>{{pichanga.equipo_visita}}</td>
+                    <td>{{pichanga.marcador_local}} - {{pichanga.marcador_visita}}</td>
+                    <td class="estado"><a href="#" class="estado-link"
+                            onclick="cambiarEstado(event, '{{ pichanga.id }}')">{{ pichanga.estadoPichanga }}</a></td>
+
+                    <td><a class="btn btn-success" href="{% url 'pichangasApp:verPichanga' pichanga.id %}"></a></td>
+                    <td><a class="btn btn-warning" href="{% url 'pichangasApp:editarPichanga' pichanga.id %}"></a></td>
+                    <td><a class="btn btn-danger"
+                            href="{% url 'pichangasApp:eliminarPichanga' pichanga.id %}"></a>Eliminar</td>
+                </tr>
+                {% endfor%}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+<script>
+    // Función para calcular el estado dinámico según la fecha
+    function calcularEstado() {
+        const fechaPichangaStr = document.querySelector('.fecha').textContent;
+        const fechaPichanga = new Date(fechaPichangaStr);
+        const estadoCell = document.querySelector('.estado');
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        if (hoy > fechaPichanga) {
+            estadoCell.textContent = 'FINALIZADO';
+        } else if (hoy <= fechaPichanga && hoy >= fechaPichanga.setDate(fechaPichanga.getDate() - 2)) {
+            estadoCell.textContent = 'FINALIZANDO';
+        } else {
+            estadoCell.textContent = 'PROGRAMADO';
+        }
+    }
+
+    // Función para cambiar el estado entre FINALIZADO y PROGRAMADO
+    function cambiarEstado(event, id) {
+        event.preventDefault();
+
+        console.log('Evento:', event);
+        console.log('ID de pichanga:', id);
+
+        const estadoCell = event.target;
+        const estadoActual = estadoCell.textContent;
+
+        // Comprobamos si el estado actual es 'FINALIZADO' y cambiamos a 'PROGRAMADO', o viceversa
+        const nuevoEstado = estadoActual === 'FINALIZADO' ? 'PROGRAMADO' : 'FINALIZADO';
+
+        // Realizamos la solicitud POST al servidor para actualizar el estado
+        fetch(`/pichangasApp/actualizar_estado/${id}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json', // Cambiar a application/json
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ nuevo_estado: nuevoEstado }), // Convertir datos a JSON
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Respuesta del servidor:', data); // Verifica la respuesta del servidor
+
+                // Actualizar el estado en el cliente solo si la respuesta indica que fue exitosa
+                if (data.mensaje === 'Estado actualizado exitosamente.') {
+                    estadoCell.textContent = nuevoEstado;
+                }
+            })
+            .catch(error => {
+                console.error('Error al actualizar el estado:', error);
+            });
+
+    }
+
+    // Llamar a la función para calcular el estado cuando la página se cargue
+    window.addEventListener('load', calcularEstado);
+</script>

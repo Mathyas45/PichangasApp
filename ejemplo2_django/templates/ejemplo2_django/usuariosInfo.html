@@ -1,0 +1,60 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de usuarios</title>
+</head>
+
+<body>
+    <div>
+        <h2>List of users</h2>
+    </div>
+    <div>
+        <h2>Enter data</h2>
+    </div>
+
+    <div>
+        <form method="post" action="{% url 'ejemplo2_django:usuariosInfo' %}">
+            {%csrf_token%}
+            <div>
+                <label>Nombre:</label>
+                <input type="text" name="usuarioNombre">
+            </div>
+            <div>
+                <label>Apellido:</label>
+                <input type="text" name="usuarioApellido">
+            </div>
+            <div>
+                <label>Codigo:</label>
+                <input type="text" name="usuarioCodigo">
+            </div>
+            <div>
+                <label>Direccion:</label>
+                <input type="text" name="usuarioDireccion">
+            </div>
+            <div>
+                <label>Email:</label>
+                <input type="text" name="usuarioEmail">
+            </div>
+            <div>
+                <button type="submit">Enviar Información</button>
+            </div>
+
+        </form>
+    </div>
+
+    <div>
+        <ul>
+            {% for estudiante in usuarios %}
+            <li>Nombre: {{estudiante.nombre}}, codigo:{{estudiante.codigo}}</li>
+            {%endfor%}
+        </ul>
+    </div>
+
+</body>
+
+</html>
